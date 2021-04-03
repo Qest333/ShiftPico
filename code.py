@@ -1,3 +1,4 @@
+import time
 import board
 import digitalio
 import usb_hid
@@ -10,16 +11,18 @@ class gear:
         self.pin.pull = digitalio.Pull.UP
 
 shifter = Gamepad(usb_hid.devices)
-gears = list()
-prevButt = 1
 shifter_pins = [board.GP18, board.GP19, board.GP20, board.GP21, board.GP10, board.GP11, board.GP12]
+gears = [gear(digitalio.DigitalInOut(pin)) for pin in shifter_pins]
 
-for pins in shifter_pins:
-    gears.append(gear(digitalio.DigitalInOut(pins)))
-
+pressedButton = 0
+prevButton = 0
 while True:
-    buttonvalue = (int)(not gears[0].pin.value) + (int)(not gears[1].pin.value)*2 + (int)(not gears[2].pin.value)*3 + (int)(not gears[3].pin.value)*4 + (int)(not gears[4].pin.value)*5 + (int)(not gears[5].pin.value)*6 + (int)(not gears[6].pin.value)*7
-    if buttonvalue != 0:
-        shifter.press_buttons(buttonvalue)
-        prevButt = buttonvalue
-    else: shifter.release_buttons(prevButt)
+    buttonvalue = (int)(not gears[0].pin.value)*2 + (int)(not gears[1].pin.value)*3 + (int)(not gears[2].pin.value)*5 + (int)(not gears[3].pin.value)*7 + (int)(not gears[4].pin.value)*11 + (int)(not gears[5].pin.value)*13 + (int)(not gears[6].pin.value)*17
+    print(buttonvalue)
+    if pressedButton > prevButton:
+        shifter.press_buttons((prevButton-pressedButton)*-1)
+    elif pressedButton < prevButton:
+        shifter.release_buttons(prevButton-pressedButton)
+    pressedButton = (buttonvalue != 0)*(1*(buttonvalue%2 == 0) + 2*(buttonvalue%3 == 0) + 3*(buttonvalue%5 == 0) + 4*(buttonvalue%7 == 0) + 5*(buttonvalue%11 == 0) + 6*(buttonvalue%13 == 0) + 7*(buttonvalue%17 == 0))
+    print(pressedButton)
+    time.sleep(0.1)
